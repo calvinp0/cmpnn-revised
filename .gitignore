@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+.venv
+*.env
+*.venv
+
+# Build / Packaging
+build/
+dist/
+*.egg-info/
+
+# Logs / Temp
+*.log
+*.out
+*.tmp
+*.swp
+
+# PyTorch Lightning logs
+lightning_logs/
+
+# Datasets / Cache
+.cache/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.npz
+
+# VSCode and other editors
+.vscode/
+.idea/
+
+# Test cache
+.pytest_cache/
+coverage.xml
+htmlcov/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.sqlite
+.mypy_cache/
+.tox/
