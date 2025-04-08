@@ -53,3 +53,5 @@ Thumbs.db
 *.sqlite
 .mypy_cache/
 .tox/
+/processed/
+/raw/

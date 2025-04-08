@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 def get_activation_fn(activation: str) -> nn.Module:
     """
     Returns an instance of the activation function based on the provided string.
@@ -31,8 +32,8 @@ def index_select_ND(source: torch.Tensor, index: torch.Tensor) -> torch.Tensor:
 
     target = source.index_select(dim=0, index=index.view(-1))  # (num_atoms/num_bonds * max_num_bonds, hidden_size)
     target = target.view(final_size)  # (num_atoms/num_bonds, max_num_bonds, hidden_size)
-    
-    target[index==0] = 0
+
+    target[index == 0] = 0
     return target
 
 

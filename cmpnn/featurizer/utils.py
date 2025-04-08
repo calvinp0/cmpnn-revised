@@ -4,12 +4,13 @@ from rdkit import Chem
 from cmpnn.data.molecule_data import MoleculeData
 from typing import List, Callable, Optional
 
-def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, global_featurizer=None, atom_messages=False):
 
+def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, global_featurizer=None,
+                       atom_messages=False):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"Invalid SMILES string: {smiles}")
-    
+
     n_atoms = 0
     n_bonds = 0
     f_atoms = []
@@ -29,7 +30,7 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
 
     for _ in range(n_atoms):
         a2b.append([])
-    
+
     # Get Bond Features
     for atom1 in range(n_atoms):
         for atom2 in range(atom1 + 1, n_atoms):
@@ -57,7 +58,7 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
             b2revb.append(b1)
             n_bonds += 2
             bonds.append(np.array([atom1, atom2]))
-    
+
     # Convert features to tensors
     f_atoms = torch.stack(f_atoms)
     f_bonds = torch.stack(f_bonds)
@@ -80,7 +81,7 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
         a_scope=a_scope,
         b_scope=b_scope,
         global_features=global_features,
-        y = torch.tensor([target], dtype=torch.float),
+        y=torch.tensor([target], dtype=torch.float),
         bonds=bonds,
         smiles=smiles,
         b2revb=b2revb,

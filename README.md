@@ -1,10 +1,8 @@
 # CMPNN-Revised
-
 A modular, extensible, and Lightning-powered revision of [SY575/CMPNN](https://github.com/SY575/CMPNN) — based on the IJCAI 2020 paper:  
 **[Communicative Representation Learning on Attributed Molecular Graphs](https://www.ijcai.org/Proceedings/2020/0392.pdf)**
 
 ## 🚀 Overview
-
 This repository revises and modernizes the original Communicative Message Passing Neural Network (CMPNN) implementation to improve:
 
 - **Extensibility** – Modular design for easy plug-and-play experimentation.
@@ -45,15 +43,10 @@ cmpnn_revised/
 ├── lightning/            # PyTorch Lightning modules
 ├── scripts/              # Training, evaluation, etc.
 ├── tests/                # Pytest unit tests
+├── mol_data/             # Molecule data for benchmarking
 ```
-## 📚 Reference
-
-Communicative Representation Learning on Attributed Molecular Graphs
-Shengchao Liu, Xuanang Li, Xuanjing Huang, Jian Tang
-IJCAI 2020 — [PDF](https://www.ijcai.org/Proceedings/2020/0392.pdf)
 
 ## 🛠 Installation
-
 Create a Conda environment and install dependencies:
 ```bash
 conda env create -f environment.yml
@@ -62,10 +55,13 @@ bash setup_device_torch.sh
 ```
 
 ## 🔬 Example Usage
-
 Coming soon. Check out scripts/ and tests/ for sample training workflows and test coverage.
 
-## 💡 Acknowledgements
+## 📚 Reference
+Communicative Representation Learning on Attributed Molecular Graphs
+Shengchao Liu, Xuanang Li, Xuanjing Huang, Jian Tang
+IJCAI 2020 — [PDF](https://www.ijcai.org/Proceedings/2020/0392.pdf)
 
+## 💡 Acknowledgements
 - Original inspiration and code: [SY575/CMPNN](https://github.com/SY575/CMPNN)
 - Built using RDKit, PyTorch Geometric, and PyTorch Lightning

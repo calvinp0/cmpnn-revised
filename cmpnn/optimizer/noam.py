@@ -1,6 +1,7 @@
 import torch
 from torch.optim.optimizer import Optimizer, required
 
+
 class NoamLikeOptimizer(Optimizer):
     """Implements a Noam-like learning rate schedule with a piecewise linear warmup followed by exponential decay.
     
@@ -14,7 +15,9 @@ class NoamLikeOptimizer(Optimizer):
         warmup_steps (int): Number of steps for the linear warmup phase.
         total_steps (int): Total number of optimization steps.
     """
-    def __init__(self, params, lr=required, init_lr=None, max_lr=1e-3, final_lr=1e-5, warmup_steps=1000, total_steps=10000):
+
+    def __init__(self, params, lr=required, init_lr=None, max_lr=1e-3, final_lr=1e-5, warmup_steps=1000,
+                 total_steps=10000):
         if init_lr is None:
             init_lr = lr
         if init_lr < 0 or max_lr < 0 or final_lr < 0:
@@ -22,7 +25,8 @@ class NoamLikeOptimizer(Optimizer):
         if warmup_steps < 1 or total_steps < warmup_steps:
             raise ValueError("warmup_steps must be at least 1 and total_steps must be >= warmup_steps")
 
-        defaults = dict(init_lr=init_lr, max_lr=max_lr, final_lr=final_lr, warmup_steps=warmup_steps, total_steps=total_steps)
+        defaults = dict(init_lr=init_lr, max_lr=max_lr, final_lr=final_lr, warmup_steps=warmup_steps,
+                        total_steps=total_steps)
         super(NoamLikeOptimizer, self).__init__(params, defaults)
         self._step_count = 0
         self._delta = (max_lr - init_lr) / warmup_steps

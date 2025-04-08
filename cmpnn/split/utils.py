@@ -4,12 +4,12 @@ from typing import List, Set, Tuple
 import matplotlib.pyplot as plt
 
 
-def log_scaffold_stats(data, 
+def log_scaffold_stats(data,
                        index_sets: List[Set[int]],
                        num_scaffolds: int = 10,
                        num_labels: int = 20,
                        logger: logging.Logger = None
-                      ) -> List[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+                       ) -> List[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Logs and returns statistics about counts, means, and standard deviations in molecular scaffolds.
 

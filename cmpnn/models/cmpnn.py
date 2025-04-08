@@ -16,8 +16,10 @@ class CMPNNEncoder(MessagePassing):
                  activation: str = 'relu', bias: bool = True, booster: str = 'sum', comm_mode: str = 'add'):
         """
         """
-        assert comm_mode in ['add', 'mlp', 'gru', 'ip'], f"Invalid comm_mode: {comm_mode}. Must be one of ['add', 'mlp', 'gru', 'ip']"
-        assert booster in ['sum', 'sum_max', 'attention', 'mean'], f"Invalid booster: {booster}. Must be one of ['sum', 'sum_max', 'attention', 'mean']"
+        assert comm_mode in ['add', 'mlp', 'gru',
+                             'ip'], f"Invalid comm_mode: {comm_mode}. Must be one of ['add', 'mlp', 'gru', 'ip']"
+        assert booster in ['sum', 'sum_max', 'attention',
+                           'mean'], f"Invalid booster: {booster}. Must be one of ['sum', 'sum_max', 'attention', 'mean']"
 
         self.booster = booster
         self.comm_mode = comm_mode
@@ -50,11 +52,10 @@ class CMPNNEncoder(MessagePassing):
         elif comm_mode == 'gru':
             self.atom_gru = nn.GRUCell(hidden_dim, hidden_dim)
 
-
         # Create stack of message passing layers
-        self.W_h = nn.ModuleList([nn.Linear(hidden_dim, self.hidden_dim, bias=bias) 
+        self.W_h = nn.ModuleList([nn.Linear(hidden_dim, self.hidden_dim, bias=bias)
                                   for _ in range(depth - 1)])
-        
+
     def initialize(self, f_atoms: torch.Tensor, f_bonds: torch.Tensor):
         """
         Initialize the atom and bond representations.
@@ -65,10 +66,10 @@ class CMPNNEncoder(MessagePassing):
         input_bond = self.act_func(self.W_i_bond(f_bonds))
         message_bond = input_bond.clone()
         return input_atom, message_atom, input_bond, message_bond
-    
+
     def message(self, message_bond: torch.Tensor, a2b: torch.Tensor) -> torch.Tensor:
         agg = index_select_ND(message_bond, a2b)  # [num_atoms, max_bonds, hidden]
-        
+
         if self.booster == 'sum':
             return agg.sum(dim=1)
         elif self.booster == 'mean':
@@ -80,7 +81,7 @@ class CMPNNEncoder(MessagePassing):
             return torch.sum(agg * scores, dim=1)  # Weighted sum
         else:
             raise ValueError(f"Unsupported booster: {self.booster}")
-    
+
     def update(self, message_atom: torch.Tensor, message_bond: torch.Tensor,
                input_bond: torch.Tensor, b2a: torch.Tensor, b2revb: torch.Tensor,
                depth_index: int) -> torch.Tensor:
@@ -90,9 +91,9 @@ class CMPNNEncoder(MessagePassing):
         rev_message = message_bond[b2revb]
         updated = message_atom[b2a] - rev_message
         updated = self.W_h[depth_index](updated)
-        updated = self.dropout_layer(self.act_func (input_bond + updated))
+        updated = self.dropout_layer(self.act_func(input_bond + updated))
         return updated
-    
+
     def communicate(self, message_atom: torch.Tensor, agg: torch.Tensor):
         if self.comm_mode == 'mlp':
             fused = torch.cat([message_atom, agg], dim=1)
@@ -131,7 +132,6 @@ class CMPNNEncoder(MessagePassing):
         agg_message = self.message(message_bond, a2b)
         agg_message = self.final_communicate(agg_message, message_atom, input_atom, a_scope)
 
-        
         atom_hiddens = self.act_func(self.W_o(agg_message))
         atom_hiddens = self.dropout_layer(atom_hiddens)
 

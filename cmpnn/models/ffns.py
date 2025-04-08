@@ -3,11 +3,13 @@ import torch.nn as nn
 from abc import ABC, abstractmethod
 from cmpnn.models.utils import get_activation_fn  # adjust import as needed
 
+
 class FFN(nn.Module, ABC):
     """
     An abstract base class for a feed-forward network.
     Defines the interface for mapping input features to output predictions.
     """
+
     @abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -21,11 +23,13 @@ class FFN(nn.Module, ABC):
         """
         pass
 
+
 class MLP(FFN):
     """
     A multilayer perceptron (MLP) implementing a feed-forward network.
     This network consists of an input layer, configurable hidden layers, and an output layer.
     """
+
     def __init__(self,
                  input_dim: int,
                  output_dim: int,
@@ -66,10 +70,10 @@ class MLP(FFN):
             layers.append(act)
             if dropout > 0:
                 layers.append(nn.Dropout(dropout))
-        
+
         # Output layer.
         layers.append(nn.Linear(hidden_dim, output_dim))
-        
+
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

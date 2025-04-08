@@ -9,6 +9,7 @@ from torch_geometric.data import Dataset
 from cmpnn.data.molecule_data import MoleculeData, MultiMoleculeDataBatch
 from cmpnn.featurizer.utils import featurize_molecule
 
+
 class MoleculeDataset(InMemoryDataset):
     """
     MoleculeDataset is a subclass of InMemoryDataset that is used to handle molecular data.
@@ -16,8 +17,9 @@ class MoleculeDataset(InMemoryDataset):
     """
 
     def __init__(self, csv_file: str, atom_featurizer: callable, bond_featurizer: callable, atom_messages: bool = False,
-                 transform=None, pre_transform=None, global_featurizer: callable = None, use_cache: bool = True, weights_only: bool = False, **kwargs):
-        
+                 transform=None, pre_transform=None, global_featurizer: callable = None, use_cache: bool = True,
+                 weights_only: bool = False, **kwargs):
+
         self.csv_file = csv_file
         self.atom_featurizer = atom_featurizer
         self.bond_featurizer = bond_featurizer
@@ -34,14 +36,15 @@ class MoleculeDataset(InMemoryDataset):
             data_list = self.process()
             self._data, self.slices = self.collate(data_list)
             torch.save((self._data, self.slices), self.processed_paths[0])
+
     @property
     def raw_file_names(self):
         return [os.path.basename(self.csv_file)]
-    
+
     @property
     def processed_file_names(self):
         return ['molecule_data.pt']
-    
+
     def download(self):
         # Implement the download logic if needed
         pass
@@ -61,7 +64,7 @@ class MoleculeDataset(InMemoryDataset):
             except ValueError as e:
                 print(f"Error processing target for SMILES {smiles}: {e}")
                 target = None
-    
+
             data = featurize_molecule(smiles=smiles, target=target,
                                       atom_featurizer=self.atom_featurizer,
                                       bond_featurizer=self.bond_featurizer,
@@ -105,8 +108,10 @@ class MultiMoleculeDataset(Dataset):
             if mol1 is None or mol2 is None:
                 continue
 
-            data1 = featurize_molecule(smiles1, target, self.atom_featurizer, self.bond_featurizer, self.global_featurizer, self.atom_messages)
-            data2 = featurize_molecule(smiles2, target, self.atom_featurizer, self.bond_featurizer, self.global_featurizer, self.atom_messages)
+            data1 = featurize_molecule(smiles1, target, self.atom_featurizer, self.bond_featurizer,
+                                       self.global_featurizer, self.atom_messages)
+            data2 = featurize_molecule(smiles2, target, self.atom_featurizer, self.bond_featurizer,
+                                       self.global_featurizer, self.atom_messages)
 
             data_list.append([data1, data2])
         return data_list

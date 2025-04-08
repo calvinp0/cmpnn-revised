@@ -5,8 +5,9 @@ import torch
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 
+
 class MoleculeData(Data):
-    def __init__(self, 
+    def __init__(self,
                  f_atoms=None,
                  f_bonds=None,
                  a2b=None,
@@ -45,7 +46,6 @@ class MoleculeData(Data):
 class MoleculeDataBatch(Batch):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
 
     @staticmethod
     def from_data_list(data_list):
@@ -116,10 +116,9 @@ class MoleculeDataBatch(Batch):
 
         t3 = time.perf_counter()
 
-        print(f"[from_data_list] Init: {t1 - t0:.4f}s | Loop: {t2 - t1:.4f}s | Finalize: {t3 - t2:.4f}s | Total: {t3 - t0:.4f}s")
+        print(
+            f"[from_data_list] Init: {t1 - t0:.4f}s | Loop: {t2 - t1:.4f}s | Finalize: {t3 - t2:.4f}s | Total: {t3 - t0:.4f}s")
         return batch
-
-
 
     # @staticmethod
     # def from_data_list(data_list):
@@ -173,7 +172,6 @@ class MoleculeDataBatch(Batch):
 
     #         b2revb[bond_offset:bond_offset + nb] = mol.b2revb.clone().detach() + bond_offset
     #         b2revb[bond_offset:bond_offset + nb] = mol.b2revb.clone().detach() + bond_offset
-
 
     #         for i in range(nb):
     #             b2 = mol_b2a[i].item()
@@ -311,7 +309,7 @@ class MultiMoleculeDataBatch:
             assert comp.n_mols == self.n_samples, "All components must have the same number of samples"
 
         self.smiles = [comp.smiles for comp in components]
-        
+
         # Ensure y is shared or consistent across components
         if y is not None:
             self.y = y
@@ -353,7 +351,8 @@ class MultiMoleculeDataBatch:
         return self.n_samples
 
     def to(self, device: Union[str, torch.device]) -> 'MultiMoleculeDataBatch':
-        return MultiMoleculeDataBatch([comp.to(device) for comp in self.components], y=self.y.to(device) if self.y is not None else None)
+        return MultiMoleculeDataBatch([comp.to(device) for comp in self.components],
+                                      y=self.y.to(device) if self.y is not None else None)
 
     def __repr__(self):
         return f"MultiMoleculeDataBatch(n_samples={self.n_samples}, n_components={self.n_components})"
@@ -365,4 +364,3 @@ class MultiMoleculeDataBatch:
     @property
     def acceptor(self):
         return self.components[1]
-

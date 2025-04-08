@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CompositeGlobalFeaturizer:
     """
     A composite featurizer that merges outputs from multiple global featurizers
@@ -17,6 +18,7 @@ class CompositeGlobalFeaturizer:
     Each featurizer must implement a method:
         featurize(mol: Chem.Mol) -> np.ndarray
     """
+
     def __init__(self, featurizers: list):
         """
         :param featurizers: A list of objects, each with a .featurize(mol: Chem.Mol) method.
@@ -27,7 +29,7 @@ class CompositeGlobalFeaturizer:
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             raise ValueError(f"Invalid SMILES: {smiles}")
-        
+
         feat_list = []
         for featurizer in self.featurizers:
             feats = featurizer.featurize(mol)
@@ -40,13 +42,15 @@ class CompositeGlobalFeaturizer:
 
 # Morgan Fingerprint Featurizer (binary version)
 class MorganBinaryFeaturizer:
-    def __init__(self, radius: int = 2, length: int = 2048, includeChirality: bool = True, useCountSimulation: bool = True):
+    def __init__(self, radius: int = 2, length: int = 2048, includeChirality: bool = True,
+                 useCountSimulation: bool = True):
         if radius < 0:
             raise ValueError(f"arg 'radius' must be >= 0! got: {radius}")
         self.radius = radius
         self.length = length
         self.useCountSimulation = useCountSimulation
-        self.F = GetMorganGenerator(radius=radius, countSimulation=useCountSimulation, includeChirality=includeChirality, fpSize=length)
+        self.F = GetMorganGenerator(radius=radius, countSimulation=useCountSimulation,
+                                    includeChirality=includeChirality, fpSize=length)
 
     def featurize(self, mol: Chem.Mol) -> np.ndarray:
         if self.useCountSimulation:
@@ -73,6 +77,7 @@ class RDKit2DFeaturizer:
     def featurize(self, mol: Chem.Mol) -> np.ndarray:
         features = np.array([func(mol) for name, func in Descriptors.descList], dtype=float)
         return features
+
 
 # V1RDKit2DNormalizedFeaturizer
 class RDKit2DNormalizedFeaturizer:

@@ -3,6 +3,7 @@ import torch
 from rdkit import Chem
 from rdkit.Chem.rdchem import HybridizationType, BondType
 
+
 class AtomFeaturizer:
     """
     Featurizes an RDKit atom using a multi-hot encoding directly as a torch.Tensor.
@@ -25,6 +26,7 @@ class AtomFeaturizer:
 
     Each one-hot encoding includes an extra slot for unknown values.
     """
+
     def __init__(self,
                  v2: bool = True,
                  atomic_num: Sequence[int] = None,
@@ -69,7 +71,7 @@ class AtomFeaturizer:
                     HybridizationType.SP3D,
                     HybridizationType.SP3D2,
                 ]
-    
+
         self.atomic_nums = {num: i for i, num in enumerate(atomic_num)}
         self.degrees = {deg: i for i, deg in enumerate(degrees)}
         self.formal_charges = {fc: i for i, fc in enumerate(formal_charge)}
@@ -103,7 +105,7 @@ class AtomFeaturizer:
         x = torch.zeros(self.__size, dtype=torch.float32)
         if a is None:
             return x
-        
+
         feats = [
             a.GetAtomicNum(),
             a.GetTotalDegree(),
@@ -136,13 +138,14 @@ class BondFeaturizer:
     When v2 is True, the output length is 15.
     When v2 is False, the output length is 14.
     """
+
     def __init__(self, v2: bool = True, bond_types: list = None, stereos: list = None):
         self.v2 = v2
         if bond_types is None:
             bond_types = [BondType.SINGLE, BondType.DOUBLE, BondType.TRIPLE, BondType.AROMATIC]
         if stereos is None:
             stereos = list(range(6))  # Known stereochemistry values: 0-5
-        
+
         self.bond_types = bond_types
         self.stereos = stereos
 
@@ -151,8 +154,8 @@ class BondFeaturizer:
         self.stereo_to_idx = {st: i for i, st in enumerate(self.stereos)}
 
         # Both v1 and v2 reserve an extra slot for unknown bond type.
-        self.size_bond_types = len(self.bond_types) + 1  
-        self.size_stereo = len(self.stereos) + 1          
+        self.size_bond_types = len(self.bond_types) + 1
+        self.size_stereo = len(self.stereos) + 1
 
         # v2 includes an extra null flag at the beginning.
         null_flag_size = 1 if self.v2 else 0

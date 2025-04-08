@@ -13,6 +13,7 @@ def mol_collate_fn(batch):
     # Use the from_data_list method to create a batch from the list of MoleculeData objects
     return MoleculeDataBatch.from_data_list(batch)
 
+
 def multimol_collate_fn(batch):
     """
     Collate function for a batch of MultiMoleculeData objects.

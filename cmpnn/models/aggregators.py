@@ -7,6 +7,7 @@ class BaseAggregator(nn.Module):
     """
     Base class for aggregating atom-level features into molecule-level representations.
     """
+
     def forward(self, atom_hiddens: torch.Tensor, a_scope: List[Tuple[int, int]]) -> torch.Tensor:
         raise NotImplementedError("Aggregator must implement forward().")
 
@@ -15,6 +16,7 @@ class MeanAggregator(BaseAggregator):
     """
     Mean aggregation over atom features per molecule.
     """
+
     def forward(self, atom_hiddens: torch.Tensor, a_scope: List[Tuple[int, int]]) -> torch.Tensor:
         mol_vecs = []
         for a_start, a_size in a_scope:
@@ -29,6 +31,7 @@ class SumAggregator(BaseAggregator):
     """
     Sum aggregation over atom features per molecule.
     """
+
     def forward(self, atom_hiddens: torch.Tensor, a_scope: List[Tuple[int, int]]) -> torch.Tensor:
         mol_vecs = []
         for a_start, a_size in a_scope:
@@ -43,6 +46,7 @@ class NormMeanAggregator(BaseAggregator):
     """
     Mean aggregator with L2 normalization per molecule vector.
     """
+
     def forward(self, atom_hiddens: torch.Tensor, a_scope: List[Tuple[int, int]]) -> torch.Tensor:
         mol_vecs = []
         for a_start, a_size in a_scope:

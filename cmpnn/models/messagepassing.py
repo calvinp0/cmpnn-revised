@@ -9,11 +9,13 @@ class MessagePassing(ABC, nn.Module):
     """
     Abstract base class for message passing layers.
     """
+
     def __init__(self):
         super().__init__()
-    
+
     @abstractmethod
-    def initialize(self, atom_features: torch.Tensor, edge_attr: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+    def initialize(self, atom_features: torch.Tensor, edge_attr: torch.Tensor,
+                   edge_index: torch.Tensor) -> torch.Tensor:
         """Compute initial hidden states for edges from atom and bond features."""
         pass
 
