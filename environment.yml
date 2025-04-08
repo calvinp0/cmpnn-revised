@@ -1,0 +1,15 @@
+name: cmpnn_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - rdkit
+  - numpy
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - jupyter
+  - pytest
+  - descriptastorus 
+
