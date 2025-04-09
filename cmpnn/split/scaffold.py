@@ -25,8 +25,23 @@ class ScaffoldSplitter(BaseSplitter):
         scaffold_sets.sort(key=lambda x: len(x), reverse=True)
         return scaffold_sets
 
-    def split(self, dataset, train_frac=0.8, val_frac=0.1, test_frac=0.1, return_indices=False):
-        assert abs(train_frac + val_frac + test_frac - 1.0) < 1e-6
+    def split(
+        self,
+        dataset,
+        train_frac=0.8,
+        val_frac=None,
+        test_frac=None,
+        return_indices=False
+    ):
+        if val_frac is None and test_frac is None:
+            raise ValueError("At least one of val_frac or test_frac must be specified.")
+        if val_frac is None:
+            val_frac = 0.0
+        if test_frac is None:
+            test_frac = 0.0
+
+        total = train_frac + val_frac + test_frac
+        assert abs(total - 1.0) < 1e-6, f"Fractions must sum to 1.0 (got {total})"
 
         scaffold_sets = self._group_by_scaffold(dataset)
 
@@ -46,9 +61,15 @@ class ScaffoldSplitter(BaseSplitter):
                 test_idx.extend(group)
 
         if return_indices:
-            return train_idx, val_idx, test_idx
+            if val_frac > 0:
+                return train_idx, val_idx, test_idx
+            else:
+                return train_idx, test_idx
         else:
-            return [dataset[i] for i in train_idx], [dataset[i] for i in val_idx], [dataset[i] for i in test_idx]
+            if val_frac > 0:
+                return [dataset[i] for i in train_idx], [dataset[i] for i in val_idx], [dataset[i] for i in test_idx]
+            else:
+                return [dataset[i] for i in train_idx], [dataset[i] for i in test_idx]
 
     def k_fold_split(self, dataset, k: int = 5, shuffle=True, return_indices=False) -> List[Union[Tuple, List]]:
         scaffold_sets = self._group_by_scaffold(dataset)

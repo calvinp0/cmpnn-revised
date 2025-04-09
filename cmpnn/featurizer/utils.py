@@ -1,9 +1,10 @@
 import torch
 import numpy as np
+import pandas as pd
 from rdkit import Chem
 from cmpnn.data.molecule_data import MoleculeData
 from typing import List, Callable, Optional
-
+import pickle
 
 def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, global_featurizer=None,
                        atom_messages=False):
@@ -61,7 +62,16 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
 
     # Convert features to tensors
     f_atoms = torch.stack(f_atoms)
+
+    if len(f_bonds) == 0:
+        if atom_messages:
+            f_bonds.append(bond_featurizer(None))
+        else:
+            f_bonds.append(torch.cat([f_atoms[0], bond_featurizer(None)]))
+            
     f_bonds = torch.stack(f_bonds)
+
+
     a2b = a2b
     b2a = b2a
     b2revb = torch.tensor(b2revb, dtype=torch.long)
@@ -86,3 +96,16 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
         smiles=smiles,
         b2revb=b2revb,
     )
+
+
+def infer_dtype(series: pd.Series) -> torch.dtype:
+    if pd.api.types.is_integer_dtype(series):
+        return torch.long
+    elif pd.api.types.is_float_dtype(series):
+        return torch.float32
+    elif pd.api.types.is_bool_dtype(series):
+        return torch.float32
+    elif pd.api.types.is_object_dtype(series):
+        return torch.long 
+    else:
+        raise ValueError(f"Unsupported target type: {series.dtype}")

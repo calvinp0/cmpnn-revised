@@ -50,21 +50,24 @@ def log_scaffold_stats(data,
     return list(zip(target_means, target_stds, counts))
 
 
+import matplotlib.pyplot as plt
+
 def plot_split_distributions(dataset, index_sets, label_index: int = 0):
     """
-    Plot distribution of a specific label (by index) across splits.
+    Plot distribution of a specific label (by index) across data splits.
     """
-    labels = ['Train', 'Validation', 'Test']
+    default_labels = ['Train', 'Validation', 'Test']
+    split_labels = default_labels[:len(index_sets)]
     values = []
 
-    for split_idx, idx_set in enumerate(index_sets):
+    for idx_set in index_sets:
         y_vals = [dataset[i].y[label_index].item() for i in idx_set if dataset[i].y is not None]
         values.append(y_vals)
 
     # Histogram
     plt.figure(figsize=(8, 5))
-    for i, vals in enumerate(values):
-        plt.hist(vals, bins=20, alpha=0.6, label=labels[i])
+    for label, vals in zip(split_labels, values):
+        plt.hist(vals, bins=20, alpha=0.6, label=label)
     plt.title(f'Histogram of Label {label_index} Across Splits')
     plt.xlabel('Target Value')
     plt.ylabel('Count')
@@ -74,7 +77,7 @@ def plot_split_distributions(dataset, index_sets, label_index: int = 0):
 
     # Boxplot
     plt.figure(figsize=(6, 4))
-    plt.boxplot(values, labels=labels)
+    plt.boxplot(values, labels=split_labels)
     plt.title(f'Boxplot of Label {label_index} Across Splits')
     plt.ylabel('Target Value')
     plt.tight_layout()

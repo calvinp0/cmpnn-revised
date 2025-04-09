@@ -80,10 +80,23 @@ class MoleculeDataBatch(Batch):
             for a in range(mol.f_atoms.size(0)):
                 a2b.append([b + n_bonds for b in mol.a2b[a]])
 
-            for b in range(mol.f_bonds.size(0)):
-                b2a.append(n_atoms + mol.b2a[b])
-                b2revb.append(n_bonds + mol.b2revb[b])
-                bonds.append([n_atoms + mol.b2a[b], n_atoms + mol.b2a[mol.b2revb[b]]])
+            # for b in range(mol.f_bonds.size(0)):
+            #     b2a.append(n_atoms + mol.b2a[b])
+            #     b2revb.append(n_bonds + mol.b2revb[b])
+            #     bonds.append([n_atoms + mol.b2a[b], n_atoms + mol.b2a[mol.b2revb[b]]])
+            if len(mol.b2a) == mol.f_bonds.size(0):
+                for b in range(mol.f_bonds.size(0)):
+                    b2a.append(n_atoms + mol.b2a[b])
+                    b2revb.append(n_bonds + mol.b2revb[b])
+                    bonds.append([
+                        n_atoms + mol.b2a[b],
+                        n_atoms + mol.b2a[mol.b2revb[b]]
+                    ])
+            else:
+                # Handle 1-atom molecule with dummy bond
+                b2a.append(0)
+                b2revb.append(0)
+                bonds.append([0, 0])
 
             a_scope.append((n_atoms, mol.f_atoms.size(0)))
             b_scope.append((n_bonds, mol.f_bonds.size(0)))
@@ -116,8 +129,8 @@ class MoleculeDataBatch(Batch):
 
         t3 = time.perf_counter()
 
-        print(
-            f"[from_data_list] Init: {t1 - t0:.4f}s | Loop: {t2 - t1:.4f}s | Finalize: {t3 - t2:.4f}s | Total: {t3 - t0:.4f}s")
+        # print(
+        #     f"[from_data_list] Init: {t1 - t0:.4f}s | Loop: {t2 - t1:.4f}s | Finalize: {t3 - t2:.4f}s | Total: {t3 - t0:.4f}s")
         return batch
 
     # @staticmethod

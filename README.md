@@ -18,6 +18,7 @@ This repository revises and modernizes the original Communicative Message Passin
   - `booster`: `'sum'`, `'mean'`, `'sum_max'`, `'attention'`
 - **Aggregation strategies** extracted into their own classes: easy to swap in `mean`, `sum`, `norm`, etc.
 - Shared encoder or separate encoders for multi-molecule models.
+- Handles 1-atom molecules by injecting an zero-filled bond feature vector that contains a null flag at index 0 when no bonds are present, fixing a missing edge case in the original CMPNN code.
 
 ### 🔁 Multi-Molecule Learning
 - Support for **pairwise molecule encoding**:
