@@ -35,7 +35,7 @@ def test_atom_featurizer_unknown_element():
 
 def test_bond_featurizer_all_types():
     mol = Chem.MolFromSmiles("C#CCO")  # single, double, triple
-    bf = BondFeaturizer(v2=True)
+    bf = BondFeaturizer()
 
     for bond in mol.GetBonds():
         feats = bf(bond)
@@ -45,28 +45,17 @@ def test_bond_featurizer_all_types():
 
 def test_bond_featurizer_aromatic_conjugated_ring():
     mol = Chem.MolFromSmiles("c1ccccc1")  # benzene
-    bf = BondFeaturizer(v2=True)
+    bf = BondFeaturizer()
     bond = mol.GetBondWithIdx(0)
     feats = bf(bond)
     assert feats[0] == 0.0  # bond exists
-    conjugation_index = 1 + bf.size_bond_types
+    conjugation_index = 1 + len(bf.bond_types)
     assert feats[conjugation_index] == 1.0  # conjugated
-    assert feats[bf.size_bond_types + 1] == 1.0  # in ring
+    assert feats[len(bf.bond_types)+ 1] == 1.0  # in ring
 
 
 def test_bond_featurizer_none_bond():
-    bf = BondFeaturizer(v2=True)
+    bf = BondFeaturizer()
     feats = bf(None)
     assert feats[0] == 1.0  # null flag
     assert feats.sum() == 1.0  # only null flag is on
-
-
-def test_bond_featurizer_v1_vs_v2_shapes():
-    mol = Chem.MolFromSmiles("CC")
-    b = mol.GetBondWithIdx(0)
-
-    feats_v1 = BondFeaturizer(v2=False)(b)
-    feats_v2 = BondFeaturizer(v2=True)(b)
-
-    assert len(feats_v2) == 15
-    assert len(feats_v1) == 14

@@ -29,6 +29,8 @@ def test_molecule_dataset_basic():
     csv_path = create_temp_csv(single=True)
     dataset = MoleculeDataset(
         csv_file=csv_path,
+        smiles_col="smiles",
+        target_cols=["target"],
         atom_featurizer=AtomFeaturizer(),
         bond_featurizer=BondFeaturizer(),
         global_featurizer=ChargeFeaturizer(),
@@ -45,6 +47,8 @@ def test_multi_molecule_dataset_basic():
     csv_path = create_temp_csv(single=False)
     dataset = MultiMoleculeDataset(
         csv_file=csv_path,
+        smiles_cols=["smiles1", "smiles2"],
+        target_cols=["target"],
         atom_featurizer=AtomFeaturizer(),
         bond_featurizer=BondFeaturizer(),
         global_featurizer=ChargeFeaturizer(),
