@@ -27,6 +27,13 @@ dist/
 
 # PyTorch Lightning logs
 lightning_logs/
+scripts/lightning_logs/
+scripts/raw
+scripts/processed
+scripts/tb_logs/
+
+# Data
+molnet_data/
 
 # Datasets / Cache
 .cache/
@@ -55,3 +62,11 @@ Thumbs.db
 .tox/
 /processed/
 /raw/
+scripts/angle_scatter_0.png
+*.png
+*.json
+*summary.csv
+hparams.yaml
+metrics.csv
+*.gif
+*.mp4

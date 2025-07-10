@@ -1,4 +1,5 @@
 from typing import Sequence
+
 import torch
 from rdkit import Chem
 from rdkit.Chem.rdchem import HybridizationType, BondType
@@ -158,13 +159,13 @@ class BondFeaturizer:
         if b is None:
             x[0] = 1
             return x
-        
+
         i = 1
         bond_type = b.GetBondType()
         bt_bit, size = self.one_hot_index(bond_type, self.bond_types)
         if bt_bit != size:
             x[i + bt_bit] = 1
-        
+
         i += size - 1
         x[i] = int(b.GetIsConjugated())
         x[i + 1] = int(b.IsInRing())

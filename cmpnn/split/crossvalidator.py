@@ -1,8 +1,9 @@
-from torch.utils.data import DataLoader, Subset
-from typing import Callable, List, Optional
-from cmpnn.data.molecule_data import MoleculeDataBatch
-import numpy as np
+from typing import Callable
+
 import torch
+from torch.utils.data import DataLoader
+
+from cmpnn.data.molecule_data import MoleculeDataBatch
 
 
 class CrossValidator:

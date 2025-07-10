@@ -1,11 +1,11 @@
+import logging
 from typing import Union
+
 import numpy as np
+from descriptastorus.descriptors import rdNormalizedDescriptors
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
-from descriptastorus.descriptors import rdNormalizedDescriptors
-
-import logging
 
 logger = logging.getLogger(__name__)
 

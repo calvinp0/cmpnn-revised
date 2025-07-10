@@ -1,7 +1,7 @@
-import numpy as np
 import logging
 from typing import List, Set, Tuple
-import matplotlib.pyplot as plt
+
+import numpy as np
 
 
 def log_scaffold_stats(data,
@@ -51,6 +51,7 @@ def log_scaffold_stats(data,
 
 
 import matplotlib.pyplot as plt
+
 
 def plot_split_distributions(dataset, index_sets, label_index: int = 0):
     """
