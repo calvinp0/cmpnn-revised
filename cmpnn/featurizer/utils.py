@@ -7,7 +7,7 @@ from typing import List, Callable, Optional
 import pickle
 
 def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, global_featurizer=None,
-                       atom_messages=False):
+                       atom_messages=False, extra_atom_features=None):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"Invalid SMILES string: {smiles}")
@@ -62,6 +62,14 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
 
     # Convert features to tensors
     f_atoms = torch.stack(f_atoms)
+
+    if extra_atom_features is not None:
+        extra_atom_features = torch.tensor(extra_atom_features, dtype=torch.float32)
+        if extra_atom_features.dim() == 1:
+            extra_atom_features = extra_atom_features.unsqueeze(0)
+        if extra_atom_features.size(0) != f_atoms.size(0):
+            raise ValueError("Mismatch between number of atoms and extra descriptors")
+        f_atoms = torch.cat([f_atoms, extra_atom_features], dim=1)
 
     if len(f_bonds) == 0:
         if atom_messages:

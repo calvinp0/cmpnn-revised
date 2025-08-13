@@ -59,6 +59,7 @@ class CMPNNLightningModule(pl.LightningModule):
             atom_messages=atom_messages,
             booster=booster,
             comm_mode=comm_mode,
+            use_batch_norm=use_batch_norm,
         )
 
         # Set the aggregator

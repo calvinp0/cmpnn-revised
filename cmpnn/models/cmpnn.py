@@ -34,6 +34,9 @@ class CMPNNEncoder(MessagePassing):
         self.dropout_layer = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         self.act_func = get_activation_fn(activation)
 
+        # Batch normalization (optional)
+        self.bn = nn.BatchNorm1d(hidden_dim) if use_batch_norm else nn.Identity()
+
         # Input layers
         self.W_i_atom = nn.Linear(atom_fdim, hidden_dim, bias=bias)
         self.W_i_bond = nn.Linear(bond_fdim, hidden_dim, bias=bias)
@@ -133,6 +136,7 @@ class CMPNNEncoder(MessagePassing):
         agg_message = self.final_communicate(agg_message, message_atom, input_atom, a_scope)
 
         atom_hiddens = self.act_func(self.W_o(agg_message))
+        atom_hiddens = self.bn(atom_hiddens)
         atom_hiddens = self.dropout_layer(atom_hiddens)
 
         return atom_hiddens
