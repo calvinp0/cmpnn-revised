@@ -1,4 +1,4 @@
-name: Run Pytest
+name: CI
 
 on:
   push:
@@ -21,13 +21,12 @@ jobs:
           environment-file: environment.yml
           auto-activate-base: false
 
-      - name: Make setup script executable
-        run: chmod +x setup_device_torch.sh
-
-      - name: Run setup script for CPU backend
+      - name: Install PyTorch dependencies (CPU)
         shell: bash -l {0}
-        run: echo "cpu" | ./setup_device_torch.sh
+        run: |
+          chmod +x setup_device_torch.sh
+          echo "cpu" | ./setup_device_torch.sh
 
-      - name: Run pytest
+      - name: Run tests
         shell: bash -l {0}
-        run: pytest tests/
+        run: pytest -q
