@@ -29,6 +29,14 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
         f_atoms.append(atom_featurizer(atom))
     f_atoms = [f_atoms[i] for i in range(n_atoms)]
 
+    if extra_atom_features is not None:
+        extra_atom_features = torch.tensor(extra_atom_features, dtype=torch.float32)
+        if extra_atom_features.dim() == 1:
+            extra_atom_features = extra_atom_features.unsqueeze(0)
+        if extra_atom_features.size(0) != n_atoms:
+            raise ValueError("Mismatch between number of atoms and extra descriptors")
+        f_atoms = [torch.cat([f_atoms[i], extra_atom_features[i]], dim=0) for i in range(n_atoms)]
+
     for _ in range(n_atoms):
         a2b.append([])
 
@@ -62,14 +70,6 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
 
     # Convert features to tensors
     f_atoms = torch.stack(f_atoms)
-
-    if extra_atom_features is not None:
-        extra_atom_features = torch.tensor(extra_atom_features, dtype=torch.float32)
-        if extra_atom_features.dim() == 1:
-            extra_atom_features = extra_atom_features.unsqueeze(0)
-        if extra_atom_features.size(0) != f_atoms.size(0):
-            raise ValueError("Mismatch between number of atoms and extra descriptors")
-        f_atoms = torch.cat([f_atoms, extra_atom_features], dim=1)
 
     if len(f_bonds) == 0:
         if atom_messages:
