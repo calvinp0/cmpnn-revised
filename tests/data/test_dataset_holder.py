@@ -3,6 +3,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 import torch
+import pytest
 
 from sklearn.compose import ColumnTransformer
 from sklearn.kernel_approximation import RBFSampler
@@ -12,6 +13,7 @@ from cmpnn.featurizer.atom_bond import AtomFeaturizer, BondFeaturizer
 from cmpnn.featurizer.molecule_dataset import MoleculeDataset, MultiMoleculeDataset
 from cmpnn.data.dataset_holder import MoleculeDatasetHolder, MultiMoleculeDatasetHolder
 from cmpnn.split.random import RandomSplitter
+from cmpnn.split.kennard_stone import KennardStoneSplitter
 
 
 class LengthFeaturizer:
@@ -41,7 +43,8 @@ def create_csv(single=True):
     return tmp.name, df
 
 
-def test_molecule_dataset_holder_transforms():
+@pytest.mark.parametrize("splitter_cls", [RandomSplitter, KennardStoneSplitter])
+def test_molecule_dataset_holder_transforms(splitter_cls):
     csv_path, df = create_csv(single=True)
     dataset = MoleculeDataset(
         csv_file=csv_path,
@@ -56,7 +59,7 @@ def test_molecule_dataset_holder_transforms():
     orig_feats = {dataset[i].smiles: dataset[i].global_features.clone() for i in range(len(dataset))}
     orig_targets = {dataset[i].smiles: dataset[i].y.clone() for i in range(len(dataset))}
 
-    splitter = RandomSplitter(seed=0)
+    splitter = splitter_cls(seed=0)
     feature_tf = ColumnTransformer(
         [
             ("rbf", RBFSampler(gamma=0.5, n_components=2, random_state=0), [0]),
@@ -98,7 +101,8 @@ def test_molecule_dataset_holder_transforms():
     os.remove(csv_path)
 
 
-def test_multi_molecule_dataset_holder_transforms():
+@pytest.mark.parametrize("splitter_cls", [RandomSplitter, KennardStoneSplitter])
+def test_multi_molecule_dataset_holder_transforms(splitter_cls):
     csv_path, df = create_csv(single=False)
     dataset = MultiMoleculeDataset(
         csv_file=csv_path,
@@ -120,7 +124,7 @@ def test_multi_molecule_dataset_holder_transforms():
         orig_feats2[key] = c2.global_features.clone()
         orig_targets[key] = c1.y.clone()
 
-    splitter = RandomSplitter(seed=0)
+    splitter = splitter_cls(seed=0)
     ft1 = ColumnTransformer([
         ("rbf", RBFSampler(gamma=0.5, n_components=2, random_state=0), [0]),
     ])
