@@ -30,4 +30,3 @@ def test_extra_atom_features_propagate_to_bonds():
     # bond features begin with the corresponding atom feature vector
     assert torch.allclose(data.f_bonds[0][: data.f_atoms.shape[1]], data.f_atoms[0])
     assert torch.allclose(data.f_bonds[1][: data.f_atoms.shape[1]], data.f_atoms[1])
-
