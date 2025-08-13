@@ -6,8 +6,16 @@ from cmpnn.data.molecule_data import MoleculeData
 from typing import List, Callable, Optional
 import pickle
 
-def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, global_featurizer=None,
-                       atom_messages=False):
+
+def featurize_molecule(
+    smiles: str,
+    target,
+    atom_featurizer,
+    bond_featurizer,
+    global_featurizer=None,
+    atom_messages=False,
+    extra_atom_features=None,
+):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"Invalid SMILES string: {smiles}")
@@ -28,6 +36,17 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
     for i, atom in enumerate(mol.GetAtoms()):
         f_atoms.append(atom_featurizer(atom))
     f_atoms = [f_atoms[i] for i in range(n_atoms)]
+
+    if extra_atom_features is not None:
+        extra_atom_features = torch.tensor(extra_atom_features, dtype=torch.float32)
+        if extra_atom_features.dim() == 1:
+            extra_atom_features = extra_atom_features.unsqueeze(0)
+        if extra_atom_features.size(0) != n_atoms:
+            raise ValueError("Mismatch between number of atoms and extra descriptors")
+        f_atoms = [
+            torch.cat([f_atoms[i], extra_atom_features[i]], dim=0)
+            for i in range(n_atoms)
+        ]
 
     for _ in range(n_atoms):
         a2b.append([])
@@ -68,9 +87,8 @@ def featurize_molecule(smiles: str, target, atom_featurizer, bond_featurizer, gl
             f_bonds.append(bond_featurizer(None))
         else:
             f_bonds.append(torch.cat([f_atoms[0], bond_featurizer(None)]))
-            
-    f_bonds = torch.stack(f_bonds)
 
+    f_bonds = torch.stack(f_bonds)
 
     a2b = a2b
     b2a = b2a
@@ -106,6 +124,6 @@ def infer_dtype(series: pd.Series) -> torch.dtype:
     elif pd.api.types.is_bool_dtype(series):
         return torch.float32
     elif pd.api.types.is_object_dtype(series):
-        return torch.long 
+        return torch.long
     else:
         raise ValueError(f"Unsupported target type: {series.dtype}")

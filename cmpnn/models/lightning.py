@@ -16,35 +16,36 @@ class CMPNNLightningModule(pl.LightningModule):
     A PyTorch Lightning module for the CMPNN model.
     """
 
-    def __init__(self,
-                 atom_fdim: int = 133,
-                 bond_fdim: int = 14,
-                 global_fdim: int = 0,
-                 atom_messages: bool = True,
-                 depth: int = 3,
-                 output_size: int = 1,
-                 hidden_dim: int = 128,
-                 dropout: float = 0.1,
-                 activation: str = 'relu',
-                 bias: bool = False,
-                 booster: str = 'sum',
-                 comm_mode: str = 'add',
-                 prediction_type: str = 'regression',
-                 aggregator: str = 'mean',
-                 use_batch_norm: bool = False,
-                 ffn_config: dict = None,
-                 optimizer_class: type = torch.optim.Adam,
-                 optimizer_params: dict = None,
-                 learning_rate: float = 1e-3,
-                 metrics: dict = None,
-                 plot_lr: bool = False):
-
+    def __init__(
+        self,
+        atom_fdim: int = 133,
+        bond_fdim: int = 14,
+        global_fdim: int = 0,
+        atom_messages: bool = True,
+        depth: int = 3,
+        output_size: int = 1,
+        hidden_dim: int = 128,
+        dropout: float = 0.1,
+        activation: str = "relu",
+        bias: bool = False,
+        booster: str = "sum",
+        comm_mode: str = "add",
+        prediction_type: str = "regression",
+        aggregator: str = "mean",
+        use_batch_norm: bool = False,
+        ffn_config: dict = None,
+        optimizer_class: type = torch.optim.Adam,
+        optimizer_params: dict = None,
+        learning_rate: float = 1e-3,
+        metrics: dict = None,
+        plot_lr: bool = False,
+    ):
         super().__init__()
         self.save_hyperparameters()
         self.output_size = output_size
         self.prediction_type = prediction_type
         self.plot_lr = plot_lr
-        if self.prediction_type == 'classification':
+        if self.prediction_type == "classification":
             self.sigmoid = nn.Sigmoid()
 
         # Create the model
@@ -59,14 +60,15 @@ class CMPNNLightningModule(pl.LightningModule):
             atom_messages=atom_messages,
             booster=booster,
             comm_mode=comm_mode,
+            use_batch_norm=use_batch_norm,
         )
 
         # Set the aggregator
-        if aggregator == 'mean':
+        if aggregator == "mean":
             self.aggregator = MeanAggregator()
-        elif aggregator == 'sum':
+        elif aggregator == "sum":
             self.aggregator = SumAggregator()
-        elif aggregator == 'norm_mean':
+        elif aggregator == "norm_mean":
             self.aggregator = NormMeanAggregator()
         else:
             raise ValueError(f"Unknown aggregator: {aggregator}")
@@ -76,13 +78,14 @@ class CMPNNLightningModule(pl.LightningModule):
         # Determine the input dimensions for the FFN
         ffn_input_dim = hidden_dim + global_fdim
         ffn_config = ffn_config if ffn_config else {}
-        self.ffn = MLP(input_dim=ffn_input_dim,
-                       output_dim=output_size,
-                       hidden_dim=ffn_config.get('hidden_dim', hidden_dim),
-                       n_layers=ffn_config.get('n_layers', 1),
-                       dropout=ffn_config.get('dropout', dropout),
-                       activation=ffn_config.get('activation', activation)
-                       )
+        self.ffn = MLP(
+            input_dim=ffn_input_dim,
+            output_dim=output_size,
+            hidden_dim=ffn_config.get("hidden_dim", hidden_dim),
+            n_layers=ffn_config.get("n_layers", 1),
+            dropout=ffn_config.get("dropout", dropout),
+            activation=ffn_config.get("activation", activation),
+        )
 
         self.optimizer_class = optimizer_class
         self.optimizer_params = optimizer_params if optimizer_params else {}
@@ -92,26 +95,34 @@ class CMPNNLightningModule(pl.LightningModule):
         initialize_weights(self)
 
         if metrics is None:
-            self.metrics = nn.ModuleDict({
-                "RMSE": torchmetrics.MeanSquaredError(squared=False),
-                "MAE": torchmetrics.MeanAbsoluteError(),
-                "R2": torchmetrics.R2Score(),
-            })
+            self.metrics = nn.ModuleDict(
+                {
+                    "RMSE": torchmetrics.MeanSquaredError(squared=False),
+                    "MAE": torchmetrics.MeanAbsoluteError(),
+                    "R2": torchmetrics.R2Score(),
+                }
+            )
         else:
             self.metrics = nn.ModuleDict(metrics)
 
-    def forward(self, f_atoms: torch.Tensor, f_bonds: torch.Tensor,
-                a2b: torch.Tensor, b2a: torch.Tensor, b2revb: torch.Tensor,
-                a_scope: torch.Tensor,
-                global_features: torch.Tensor = None) -> torch.Tensor:
+    def forward(
+        self,
+        f_atoms: torch.Tensor,
+        f_bonds: torch.Tensor,
+        a2b: torch.Tensor,
+        b2a: torch.Tensor,
+        b2revb: torch.Tensor,
+        a_scope: torch.Tensor,
+        global_features: torch.Tensor = None,
+    ) -> torch.Tensor:
         """
         Forward pass through the model.
-        
+
         Args:
             f_atoms: Atom features.
             f_bonds: Bond features.
             global_features: Global features.
-        
+
         Returns:
             Output tensor.
         """
@@ -122,7 +133,7 @@ class CMPNNLightningModule(pl.LightningModule):
             a2b=a2b,
             b2a=b2a,
             b2revb=b2revb,
-            a_scope=a_scope
+            a_scope=a_scope,
         )
 
         # Aggregate atom features to molecule features
@@ -140,11 +151,11 @@ class CMPNNLightningModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         """
         Training step for the model.
-        
+
         Args:
             batch: Batch of data.
             batch_idx: Batch index.
-        
+
         Returns:
             Loss value.
         """
@@ -156,10 +167,14 @@ class CMPNNLightningModule(pl.LightningModule):
         b2revb = batch.b2revb
         a_scope = batch.a_scope
         targets = batch.y
-        global_features = batch.global_features if hasattr(batch, 'global_features') else None
+        global_features = (
+            batch.global_features if hasattr(batch, "global_features") else None
+        )
 
         # Forward pass
-        output = self(atom_features, bond_features, a2b, b2a, b2revb, a_scope, global_features)
+        output = self(
+            atom_features, bond_features, a2b, b2a, b2revb, a_scope, global_features
+        )
         if targets.dim() == 1:
             targets = targets.unsqueeze(1)
 
@@ -167,18 +182,18 @@ class CMPNNLightningModule(pl.LightningModule):
         loss = F.mse_loss(output, targets)
 
         # Log metrics
-        self.log('train_loss', loss, prog_bar=True, batch_size=targets.size(0))
+        self.log("train_loss", loss, prog_bar=True, batch_size=targets.size(0))
 
         return loss
 
     def validation_step(self, batch, batch_idx):
         """
         Validation step for the model.
-        
+
         Args:
             batch: Batch of data.
             batch_idx: Batch index.
-        
+
         Returns:
             Loss value.
         """
@@ -190,9 +205,13 @@ class CMPNNLightningModule(pl.LightningModule):
         b2revb = batch.b2revb
         a_scope = batch.a_scope
         targets = batch.y
-        global_features = batch.global_features if hasattr(batch, 'global_features') else None
+        global_features = (
+            batch.global_features if hasattr(batch, "global_features") else None
+        )
         # Forward pass
-        output = self(atom_features, bond_features, a2b, b2a, b2revb, a_scope, global_features)
+        output = self(
+            atom_features, bond_features, a2b, b2a, b2revb, a_scope, global_features
+        )
 
         if targets.dim() == 1:
             targets = targets.unsqueeze(1)
@@ -201,7 +220,7 @@ class CMPNNLightningModule(pl.LightningModule):
         loss = self.loss_fn(output, targets)
 
         # Log metrics
-        self.log('val_loss', loss, prog_bar=True, batch_size=targets.size(0))
+        self.log("val_loss", loss, prog_bar=True, batch_size=targets.size(0))
 
         return loss
 
@@ -217,11 +236,11 @@ class CMPNNLightningModule(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         """
         Test step for the model.
-        
+
         Args:
             batch: Batch of data.
             batch_idx: Batch index.
-        
+
         Returns:
             Loss value.
         """
@@ -233,22 +252,26 @@ class CMPNNLightningModule(pl.LightningModule):
         b2revb = batch.b2revb
         a_scope = batch.a_scope
         targets = batch.y
-        global_features = batch.global_features if hasattr(batch, 'global_features') else None
+        global_features = (
+            batch.global_features if hasattr(batch, "global_features") else None
+        )
 
         # Forward pass
-        output = self(atom_features, bond_features, a2b, b2a, b2revb, a_scope, global_features)
+        output = self(
+            atom_features, bond_features, a2b, b2a, b2revb, a_scope, global_features
+        )
 
         if targets.dim() == 1:
             targets = targets.unsqueeze(1)
 
-        self.test_outputs.append({"preds": output.detach(), "targets": targets.detach()})
+        self.test_outputs.append(
+            {"preds": output.detach(), "targets": targets.detach()}
+        )
         return {}
 
     def configure_optimizers(self):
         optimizer = self.optimizer_class(
-            self.parameters(),
-            lr=self.learning_rate,
-            **self.optimizer_params
+            self.parameters(), lr=self.learning_rate, **self.optimizer_params
         )
         self.optimizer_instance = optimizer  # Save it for use in on_train_end
         return optimizer
@@ -259,6 +282,7 @@ class CMPNNLightningModule(pl.LightningModule):
         optimizer = self.trainer.optimizers[0]
         if isinstance(optimizer, NoamLikeOptimizer):
             import os
+
             log_dir = self.trainer.logger.log_dir if self.trainer.logger else "."
             path = os.path.join(log_dir, "lr_schedule.png")
             optimizer.plot_lr_schedule(save_path=path)
@@ -279,15 +303,15 @@ class CMPNNLightningModule(pl.LightningModule):
     def loss_fn(self, predictions, targets):
         """
         Compute the loss between predictions and targets.
-        
+
         Args:
             predictions: Model predictions.
             targets: Ground truth targets.
-        
+
         Returns:
             Loss value.
         """
-        if self.prediction_type == 'classification':
+        if self.prediction_type == "classification":
             loss = nn.BCEWithLogitsLoss()(predictions, targets)
         else:
             loss = nn.MSELoss()(predictions, targets)
@@ -324,60 +348,84 @@ class MultiCMPNNLightningModule(pl.LightningModule):
     A PyTorch Lightning module for multiple CMPNN Encoder model.
     """
 
-    def __init__(self,
-                 atom_fdim: int = 133,
-                 bond_fdim: int = 14,
-                 global_fdim: int = 0,
-                 shared_encoder: bool = False,
-                 n_components: int = 2,
-                 atom_messages: bool = True,
-                 depth: int = 3,
-                 output_size: int = 1,
-                 hidden_dim: int = 128,
-                 dropout: float = 0.1,
-                 activation: str = 'relu',
-                 bias: bool = False,
-                 booster: str = 'sum',
-                 comm_mode: str = 'add',
-                 prediction_type: str = 'regression',
-                 aggregator: str = 'mean',
-                 use_batch_norm: bool = False,
-                 ffn_config: dict = None,
-                 optimizer_class: type = torch.optim.Adam,
-                 optimizer_params: dict = None,
-                 learning_rate: float = 1e-3,
-                 metrics: dict = None,
-                 plot_lr: bool = False):
+    def __init__(
+        self,
+        atom_fdim: int = 133,
+        bond_fdim: int = 14,
+        global_fdim: int = 0,
+        shared_encoder: bool = False,
+        n_components: int = 2,
+        atom_messages: bool = True,
+        depth: int = 3,
+        output_size: int = 1,
+        hidden_dim: int = 128,
+        dropout: float = 0.1,
+        activation: str = "relu",
+        bias: bool = False,
+        booster: str = "sum",
+        comm_mode: str = "add",
+        prediction_type: str = "regression",
+        aggregator: str = "mean",
+        use_batch_norm: bool = False,
+        ffn_config: dict = None,
+        optimizer_class: type = torch.optim.Adam,
+        optimizer_params: dict = None,
+        learning_rate: float = 1e-3,
+        metrics: dict = None,
+        plot_lr: bool = False,
+    ):
         super().__init__()
         self.save_hyperparameters()
         self.output_size = output_size
         self.prediction_type = prediction_type
         self.plot_lr = plot_lr
-        if self.prediction_type == 'classification':
+        if self.prediction_type == "classification":
             self.sigmoid = nn.Sigmoid()
         self.shared_encoder = shared_encoder
 
         if shared_encoder:
-            self.encoders = nn.ModuleList([CMPNNEncoder(atom_fdim, bond_fdim, atom_messages=atom_messages,
-                                                        depth=depth, hidden_dim=hidden_dim,
-                                                        dropout=dropout, activation=activation,
-                                                        bias=bias, booster=booster, comm_mode=comm_mode)]
-                                          * n_components)
+            self.encoders = nn.ModuleList(
+                [
+                    CMPNNEncoder(
+                        atom_fdim,
+                        bond_fdim,
+                        atom_messages=atom_messages,
+                        depth=depth,
+                        hidden_dim=hidden_dim,
+                        dropout=dropout,
+                        activation=activation,
+                        bias=bias,
+                        booster=booster,
+                        comm_mode=comm_mode,
+                    )
+                ]
+                * n_components
+            )
         else:
-            self.encoders = nn.ModuleList([
-                CMPNNEncoder(atom_fdim, bond_fdim, atom_messages=atom_messages,
-                             depth=depth, hidden_dim=hidden_dim,
-                             dropout=dropout, activation=activation,
-                             bias=bias, booster=booster, comm_mode=comm_mode)
-                for _ in range(n_components)
-            ])
+            self.encoders = nn.ModuleList(
+                [
+                    CMPNNEncoder(
+                        atom_fdim,
+                        bond_fdim,
+                        atom_messages=atom_messages,
+                        depth=depth,
+                        hidden_dim=hidden_dim,
+                        dropout=dropout,
+                        activation=activation,
+                        bias=bias,
+                        booster=booster,
+                        comm_mode=comm_mode,
+                    )
+                    for _ in range(n_components)
+                ]
+            )
 
         # Set the aggregator
-        if aggregator == 'mean':
+        if aggregator == "mean":
             self.aggregator = MeanAggregator()
-        elif aggregator == 'sum':
+        elif aggregator == "sum":
             self.aggregator = SumAggregator()
-        elif aggregator == 'norm_mean':
+        elif aggregator == "norm_mean":
             self.aggregator = NormMeanAggregator()
         else:
             raise ValueError(f"Unknown aggregator: {aggregator}")
@@ -387,13 +435,14 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         ffn_input_dim = (hidden_dim + global_fdim) * n_components
         ffn_config = ffn_config if ffn_config else {}
 
-        self.ffn = MLP(input_dim=ffn_input_dim,
-                       output_dim=output_size,
-                       hidden_dim=ffn_config.get('hidden_dim', hidden_dim),
-                       n_layers=ffn_config.get('n_layers', 1),
-                       dropout=ffn_config.get('dropout', dropout),
-                       activation=ffn_config.get('activation', activation)
-                       )
+        self.ffn = MLP(
+            input_dim=ffn_input_dim,
+            output_dim=output_size,
+            hidden_dim=ffn_config.get("hidden_dim", hidden_dim),
+            n_layers=ffn_config.get("n_layers", 1),
+            dropout=ffn_config.get("dropout", dropout),
+            activation=ffn_config.get("activation", activation),
+        )
 
         self.optimizer_class = optimizer_class
         self.optimizer_params = optimizer_params if optimizer_params else {}
@@ -403,11 +452,13 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         initialize_weights(self)
 
         if metrics is None:
-            self.metrics = nn.ModuleDict({
-                "RMSE": torchmetrics.MeanSquaredError(squared=False),
-                "MAE": torchmetrics.MeanAbsoluteError(),
-                "R2": torchmetrics.R2Score(),
-            })
+            self.metrics = nn.ModuleDict(
+                {
+                    "RMSE": torchmetrics.MeanSquaredError(squared=False),
+                    "MAE": torchmetrics.MeanAbsoluteError(),
+                    "R2": torchmetrics.R2Score(),
+                }
+            )
         else:
             self.metrics = nn.ModuleDict(metrics)
 
@@ -422,7 +473,7 @@ class MultiCMPNNLightningModule(pl.LightningModule):
                 a2b=comp.a2b,
                 b2a=comp.b2a,
                 b2revb=comp.b2revb,
-                a_scope=comp.a_scope
+                a_scope=comp.a_scope,
             )
 
             mol_vector = self.aggregator(atom_hidden, comp.a_scope)
@@ -440,11 +491,11 @@ class MultiCMPNNLightningModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         """
         Training step for the model.
-        
+
         Args:
             batch: Batch of data.
             batch_idx: Batch index.
-        
+
         Returns:
             Loss value.
         """
@@ -455,17 +506,17 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         # Compute loss
         loss = F.mse_loss(output, targets)
         # Log metrics
-        self.log('train_loss', loss, prog_bar=True, batch_size=targets.size(0))
+        self.log("train_loss", loss, prog_bar=True, batch_size=targets.size(0))
         return loss
 
     def validation_step(self, batch, batch_idx):
         """
         Validation step for the model.
-        
+
         Args:
             batch: Batch of data.
             batch_idx: Batch index.
-        
+
         Returns:
             Loss value.
         """
@@ -476,7 +527,7 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         # Compute loss
         loss = F.mse_loss(output, targets)
         # Log metrics
-        self.log('val_loss', loss, prog_bar=True, batch_size=targets.size(0))
+        self.log("val_loss", loss, prog_bar=True, batch_size=targets.size(0))
         return loss
 
     def on_test_epoch_start(self):
@@ -491,11 +542,11 @@ class MultiCMPNNLightningModule(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         """
         Test step for the model.
-        
+
         Args:
             batch: Batch of data.
             batch_idx: Batch index.
-        
+
         Returns:
             Loss value.
         """
@@ -503,14 +554,14 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         targets = batch.y
         if targets.dim() == 1:
             targets = targets.unsqueeze(1)
-        self.test_outputs.append({"preds": output.detach(), "targets": targets.detach()})
+        self.test_outputs.append(
+            {"preds": output.detach(), "targets": targets.detach()}
+        )
         return {}
 
     def configure_optimizers(self):
         optimizer = self.optimizer_class(
-            self.parameters(),
-            lr=self.learning_rate,
-            **self.optimizer_params
+            self.parameters(), lr=self.learning_rate, **self.optimizer_params
         )
         self.optimizer_instance = optimizer
         return optimizer
@@ -521,6 +572,7 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         optimizer = self.trainer.optimizers[0]
         if isinstance(optimizer, NoamLikeOptimizer):
             import os
+
             log_dir = self.trainer.logger.log_dir if self.trainer.logger else "."
             path = os.path.join(log_dir, "lr_schedule.png")
             optimizer.plot_lr_schedule(save_path=path)
@@ -548,7 +600,7 @@ class MultiCMPNNLightningModule(pl.LightningModule):
         Returns:
             Loss value.
         """
-        if self.prediction_type == 'classification':
+        if self.prediction_type == "classification":
             loss = nn.BCEWithLogitsLoss()(predictions, targets)
         else:
             loss = nn.MSELoss()(predictions, targets)
