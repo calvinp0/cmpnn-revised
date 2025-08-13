@@ -100,6 +100,12 @@ def featurize_molecule(
     if global_featurizer is not None:
         global_features = torch.tensor(global_featurizer(smiles), dtype=torch.float)
 
+    # Ensure target is a floating tensor with shape ``(n_targets,)``
+    if torch.is_tensor(target):
+        y_tensor = target.float()
+    else:
+        y_tensor = torch.tensor([target], dtype=torch.float32)
+
     # Create MoleculeData object
     return MoleculeData(
         f_atoms=f_atoms,
@@ -109,7 +115,7 @@ def featurize_molecule(
         a_scope=a_scope,
         b_scope=b_scope,
         global_features=global_features,
-        y=torch.tensor([target], dtype=torch.float),
+        y=y_tensor,
         bonds=bonds,
         smiles=smiles,
         b2revb=b2revb,
