@@ -1,4 +1,5 @@
 import time
+from pyparsing import Callable
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -630,3 +631,110 @@ class MultiCMPNNLightningModuleTimed(MultiCMPNNLightningModule):
         start = time.time()
         optimizer.step(closure=optimizer_closure)
         print(f"[Timing] optimizer_step: {time.time() - start:.4f}s")
+
+
+class ArrheniusMultiCMPNNLightningModule(MultiCMPNNLightningModule):
+    r"""Multi-component CMPNN with Arrhenius post-processing.
+
+    This module predicts Arrhenius parameters ``[A, n, Ea]`` for each sample and
+    supports optional unscaling of both predictions and targets before the loss
+    is computed.  The final loss is a sum of the parameter mean-squared error and
+    the mean-squared error of the derived :math:`\ln k(T)` values computed via an
+    :class:`~cmpnn.models.arrhenius.ArrheniusLayer`.
+    """
+
+    def __init__(
+        self,
+        *args,
+        temps: list[float],
+        target_unscalers: list[Callable[[torch.Tensor], torch.Tensor]] | None = None,
+        lnk_mean: torch.Tensor | None = None,
+        lnk_scale: torch.Tensor | None = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.arrhenius = MLP(
+            input_dim=1,
+            output_dim=1,
+            hidden_dim=64,
+            n_layers=2,
+            dropout=0.1,
+            activation="relu",
+        )
+
+    def _encode_one(self, comp) -> torch.Tensor:
+        if self.shared_encoder:
+            atom_hidden = self.encoder(
+                f_atoms=comp.f_atoms,
+                f_bonds=comp.f_bonds,
+                a2b=comp.a2b,
+                b2a=comp.b2a,
+                b2revb=comp.b2revb,
+                a_scope=comp.a_scope,
+            )
+        else:
+            raise RunTimeError("Use _encode_pair for non-shared case")
+
+        mol_vector = self.aggregator(atom_hidden, comp.a_scope)
+        if comp.global_features is not None:
+            mol_vector = torch.cat([mol_vector, comp.global_features], dim=-1)
+        return mol_vector
+
+    def _encode_pair(self, batch) -> torch.Tensor:
+        comps = batch.components
+        if self.shared_encoder:
+            h_d = self._encode_one(comps[0])
+            h_a = self._encode_one(comps[1])
+        else:
+            h_d = self.encoders[0](
+                f_atoms=comps[0].f_atoms,
+                f_bonds=comps[0].f_bonds,
+                a2b=comps[0].a2b,
+                b2a=comps[0].b2a,
+                b2revb=comps[0].b2revb,
+                a_scope=comps[0].a_scope,
+            )
+            h_d = self.aggregator(h_d, comps[0].a_scope)
+            if comps[0].global_features is not None:
+                h_d = torch.cat([h_d, comps[0].global_features], dim=-1)
+
+            h_a = self.encoders[1](
+                f_atoms=comps[1].f_atoms,
+                f_bonds=comps[1].f_bonds,
+                a2b=comps[1].a2b,
+                b2a=comps[1].b2a,
+                b2revb=comps[1].b2revb,
+                a_scope=comps[1].a_scope,
+            )
+            h_a = self.aggregator(h_a, comps[1].a_scope)
+            if comps[1].global_features is not None:
+                h_a = torch.cat([h_a, comps[1].global_features], dim=-1)
+
+        # Build both orders
+        z_fwd = torch.cat([h_d, h_a], dim=-1)  # donor | acceptor
+        z_rev = torch.cat([h_a, h_d], dim=-1)  # acceptor | donor
+
+        z_fwd = self.bn(z_fwd)
+        z_rev = self.bn(z_rev)
+
+        return z_fwd, z_rev
+
+    def _unscale(self, tensor: torch.Tensors) -> torch.Tensor:
+        """Unscale the tensor using the target unscalers."""
+        if not self.target_unscalers:
+            return tensor
+
+        cols = []
+        for i in range(tensor.size(1)):
+            fn = self.target_unscalers[i] if i < len(self.target_unscalers) else None
+            if fn is None:
+                cols.append(tensor[:, i : i + 1])
+            else:
+                cols.append(fn(tensor[:, i : i + 1]))
+        return torch.cat(cols, dim=1)
+
+    def forward(self, batch):
+        z_fwd, z_rev = self._encode_pair(batch)
+        y_fwd = self.head_fwd(z_fwd)
+        y_rev = self.head_rev(z_rev)
+        return {"y_fwd": y_fwd, "y_rev": y_rev}

@@ -1,9 +1,3 @@
-from . import data, featurizer, models, optimizer, split
+from . import data, featurizer, models, optimizer, split, scaler
 
-__all__ = [
-    "data",
-    "featurizer",
-    "models",
-    "optimizer",
-    "split"
-]
+__all__ = ["data", "featurizer", "models", "optimizer", "split", "scaler"]
