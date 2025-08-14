@@ -51,6 +51,10 @@ elif [[ $backend == "rocm" ]]; then
 	wget https://github.com/Looong01/pyg-rocm-build/releases/download/9/torch-2.6-rocm-6.2.4-py312-linux_x86_64.zip
 	unzip torch-2.6-rocm-6.2.4-py312-linux_x86_64.zip
 	pip install torch_*.whl
+	# Remove downloaded zip file
+	rm -v torch-2.6-rocm-6.2.4-py312-linux_x86_64.zip
+	# Remove the wheels
+	rm -v torch_*.whl
 
 else
 	echo "Invalid backend: choose one of [cpu, cuda, rocm]"
